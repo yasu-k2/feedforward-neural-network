@@ -111,9 +111,28 @@ class ff_NN:
         return correct_rate
 
     # 中間層の可視化
-    def print_internal(self):
-        # TODO
-        print inp_int_weight
+    def print_internal(self, thre=-1):
+        # TODO omomi seikika, hunishinai  black is 0, white is 1
+        bias, img = np.hsplit(self.inp_int_weight, [1])
+        plt.clf()
+        for i, unit in enumerate(np.array(img)):
+            unit = unit / np.fabs(unit.max())
+            for j in range(0, len(unit)):
+                if unit[j] <= 0.0:
+                    unit[j] = 0.0
+                if thre != -1:
+                    if unit[j] >= thre:
+                        unit[j] = 1.0
+                    else:
+                        unit[j] = 0.0
+
+            plt.subplot(10, 10, i + 1)
+            plt.axis('off') #[0, 27, 0, 27]
+            plt.imshow(unit.reshape(28, 28), interpolation='nearest')
+            plt.title('%i' % i, fontsize=10)
+            plt.gray()
+        plt.show()
+        #plt.savefig('inp_int_weight.png')
 
     # 重みの保存
     def save_weight(self, path):
@@ -140,10 +159,14 @@ def softmax(x):
 # 入力画像の表示
 def print_img(x, y):
     if x.size == 28*28 + 1:
-        print a #
-    x_2 = x.reshape((28, 28))
+        bias, x_1 = np.hsplit(x,[1])
+    else:
+        x_1 = x
+    x_2 = x_1.reshape((28, 28))
     plt.clf()
     plt.imshow(x_2, interpolation='none')
+    plt.title('%i' % y)
+    plt.axis('off')
     plt.gray()
     plt.show()
     
@@ -169,7 +192,7 @@ if __name__ == '__main__':
 #目標0010000とか
 #epoch 更新　ミニバッチ
 
-# 0~9の手書き数字認識
+    # 0~9の手書き数字認識
     # MNIST 28*28 70000samples
     mnist_org = fetch_mldata('MNIST original', data_home=".")
     X = mnist_org.data
@@ -181,9 +204,9 @@ if __name__ == '__main__':
     label_training = LabelBinarizer().fit_transform(Y_training)
 
     for noise_rate in range(0, 30, 5):
-
+    
         # ニューラルネットの構築
-        feedforward_NN = ff_NN(28*28, 100, 10)
+        feedforward_NN = ff_NN(28*28, 99, 10)
         
         # 重みの読み込み
         #feedforward_NN.load_weight('ff_NN_weight.npz')
@@ -204,18 +227,19 @@ if __name__ == '__main__':
         num_epochs = np.array(num_epochs)
         correct_list = np.array(correct_list)
         plt.plot(num_epochs, correct_list, '-o')
-
+        
     plt.grid()
-    plt.legend(['0[%]', ' 5[%]', '10[%]', '15[%]', '20[%]', '25[%]'], loc='upper top') #best
+    plt.legend([' 0[%]', ' 5[%]', '10[%]', '15[%]', '20[%]', '25[%]'], title='noise rate', loc='best') # upper left
     plt.title('identification rate (based on noise rates)')
     plt.xlabel('number of epochs [times]')
     plt.ylabel('identification rate [%]')
     plt.show()
     #plt.savefig("identification_rate.png")
     #plt.clf()
+    
 
     # 中間層の表示
-    #feedforward_NN.print_internal()
+    feedforward_NN.print_internal(0.8)
 
     # 重みの保存
     #feedforward_NN.save_weight('ff_NN_weight.npz')
