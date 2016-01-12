@@ -68,7 +68,7 @@ class ff_NN:
         for i in range(epoch):
             # データ選択
             ind = np.random.randint(X.shape[0])
-            # TODO: ノイズ付与
+            # ノイズ付与
             for j in range(1, len(X[ind])):
                 pixel_noise = np.random.rand()
                 if pixel_noise <= self.noise_rate:
@@ -112,7 +112,7 @@ class ff_NN:
 
     # 中間層の可視化
     def print_internal(self, thre=-1):
-        # TODO omomi seikika, hunishinai  black is 0, white is 1
+        # 重みの正規化、負の値は排除 black is 0, white is 1
         bias, img = np.hsplit(self.inp_int_weight, [1])
         plt.clf()
         for i, unit in enumerate(np.array(img)):
@@ -126,7 +126,7 @@ class ff_NN:
                     else:
                         unit[j] = 0.0
 
-            plt.subplot(10, 10, i + 1)
+            plt.subplot(4, 4, i + 1)
             plt.axis('off') #[0, 27, 0, 27]
             plt.imshow(unit.reshape(28, 28), interpolation='nearest')
             plt.title('%i' % i, fontsize=10)
@@ -203,10 +203,12 @@ if __name__ == '__main__':
     X_training, X_testing, Y_training, Y_testing = train_test_split(X, Y, test_size = 0.1)
     label_training = LabelBinarizer().fit_transform(Y_training)
 
+    """ 
+    # ノイズ率別の識別率
     for noise_rate in range(0, 30, 5):
     
         # ニューラルネットの構築
-        feedforward_NN = ff_NN(28*28, 99, 10)
+        feedforward_NN = ff_NN(28*28, 9, 10)
         
         # 重みの読み込み
         #feedforward_NN.load_weight('ff_NN_weight.npz')
@@ -219,27 +221,51 @@ if __name__ == '__main__':
         num_epochs = [0]
         before_training = feedforward_NN.test(X_testing, Y_testing)
         correct_list = [before_training]
-        for i in range(1):
-            feedforward_NN.train(X_training, label_training, 500)
+        for i in range(20):
+            feedforward_NN.train(X_training, label_training, 1000)
             correct_case = feedforward_NN.test(X_testing, Y_testing)
-            num_epochs.append(500 * (i + 1))
+            num_epochs.append(1000 * (i + 1))
             correct_list.append(correct_case)
         num_epochs = np.array(num_epochs)
         correct_list = np.array(correct_list)
         plt.plot(num_epochs, correct_list, '-o')
         
     plt.grid()
-    plt.legend([' 0[%]', ' 5[%]', '10[%]', '15[%]', '20[%]', '25[%]'], title='noise rate', loc='best') # upper left
+    plt.legend([' 0[%]', ' 5[%]', '10[%]', '15[%]', '20[%]', '25[%]'], title='noise rate', loc='best')
     plt.title('identification rate (based on noise rates)')
     plt.xlabel('number of epochs [times]')
     plt.ylabel('identification rate [%]')
     plt.show()
     #plt.savefig("identification_rate.png")
     #plt.clf()
-    
+    """
 
-    # 中間層の表示
-    feedforward_NN.print_internal(0.8)
+    # ニューラルネットの構築
+    feedforward_NN = ff_NN(28*28, 15, 10)
+        
+    # 重みの読み込み
+    #feedforward_NN.load_weight('ff_NN_weight.npz')
+
+    # 学習と評価
+    num_epochs = [0]
+    before_training = feedforward_NN.test(X_testing, Y_testing)
+    correct_list = [before_training]
+    for i in range(20):
+        feedforward_NN.train(X_training, label_training, 1000)
+        correct_case = feedforward_NN.test(X_testing, Y_testing)
+        num_epochs.append(1000 * (i + 1))
+        correct_list.append(correct_case)
+    num_epochs = np.array(num_epochs)
+    correct_list = np.array(correct_list)
+    plt.plot(num_epochs, correct_list, '-o')    
+    plt.grid()
+    plt.title('identification rate (internal layers:9+1)')
+    plt.xlabel('number of epochs [times]')
+    plt.ylabel('identification rate [%]')
+    plt.show()
+
+    # 中間層の表示 中間層数に合わせていじる必要あり
+    feedforward_NN.print_internal(0.7)
 
     # 重みの保存
     #feedforward_NN.save_weight('ff_NN_weight.npz')
